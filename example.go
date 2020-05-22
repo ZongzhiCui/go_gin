@@ -25,6 +25,8 @@ func main() {
 		//解决 跨域问题 <-
 
 		v1.POST("/login", Controller.LoginEndpoint)
+		v1.POST("/create", Controller.Create_user)
+
 		v1.GET("/ping", Controller.Ping)
 
 	}
