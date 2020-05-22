@@ -1,36 +1,65 @@
 package main
 
 import (
-	"github.com/ZongzhiCui/go_gin/Http/Controller"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
+var db = make(map[string]string)
+
+func setupRouter() *gin.Engine {
+	// Disable Console Color
+	// gin.DisableConsoleColor()
 	r := gin.Default()
-	v1 := r.Group("/api") //路由组,可嵌套
-	{
-		//解决 跨域问题 ->
-		//var c *gin.Context
-		//c.Header("Access-Control-Allow-Origin", "*")
-		//c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
-		//c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		//c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-		//c.Header("Access-Control-Allow-Credentials", "true")
-		//
-		////放行所有OPTIONS方法
-		//method := c.Request.Method
-		//if method == "OPTIONS" {
-		//	c.AbortWithStatus(http.StatusNoContent)
-		//}
-		//解决 跨域问题 <-
 
-		v1.POST("/login", Controller.LoginEndpoint)
-		v1.POST("/create", Controller.Create_user)
+	// Ping test
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
 
-		v1.GET("/ping", Controller.Ping)
+	// Get user value
+	r.GET("/user/:name", func(c *gin.Context) {
+		user := c.Params.ByName("name")
+		value, ok := db[user]
+		if ok {
+			c.JSON(http.StatusOK, gin.H{"user": user, "value": value})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"user": user, "status": "no value"})
+		}
+	})
 
-	}
+	// Authorized group (uses gin.BasicAuth() middleware)
+	// Same than:
+	// authorized := r.Group("/")
+	// authorized.Use(gin.BasicAuth(gin.Credentials{
+	//	  "foo":  "bar",
+	//	  "manu": "123",
+	//}))
+	authorized := r.Group("/", gin.BasicAuth(gin.Accounts{
+		"foo":  "bar", // user:foo password:bar
+		"manu": "123", // user:manu password:123
+	}))
 
-	r.Run(":3001") // 监听并在 0.0.0.0:8080 上启动服务
-	//然而 127.0.0.1:3001 可以访问, 0.0.0.0:3001 却不能访问
+	authorized.POST("admin", func(c *gin.Context) {
+		user := c.MustGet(gin.AuthUserKey).(string)
+
+		// Parse JSON
+		var json struct {
+			Value string `json:"value" binding:"required"`
+		}
+
+		if c.Bind(&json) == nil {
+			db[user] = json.Value
+			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		}
+	})
+
+	return r
+}
+
+func main() {
+	r := setupRouter()
+	// Listen and Server in 0.0.0.0:8080
+	r.Run(":8080")
 }
