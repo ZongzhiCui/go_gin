@@ -1,7 +1,7 @@
 package Model
 
 import (
-	"github.com/ZongzhiCui/go_gin/config"
+	"ZongzhiCui/go_gin/config"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
@@ -38,15 +38,16 @@ func (u User) TableName() string {
 	return "user"
 }
 
-func User_info() User {
+func User_info(user string) User {
 	//defer db.Close()
 
 	// 查
 	var product User
 	//fmt.Println(db.HasTable(product)) //表是否存在
 
-	db.First(&product, 1) // 找到id为1的产品
+	//db.First(&product, 1) // 找到id为1的产品
 	//db.First(&product, "code = ?", "L1212") // 找出 code 为 l1212 的产品
+	db.First(&product, "name = ?", user)
 
 	return product
 }

@@ -1,0 +1,13 @@
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/login                --> ZongzhiCui/go_gin/Http/Controller.LoginEndpoint (3 handlers)
+[GIN-debug] POST   /api/create               --> ZongzhiCui/go_gin/Http/Controller.Create_user (3 handlers)
+[GIN-debug] GET    /api/ping                 --> ZongzhiCui/go_gin/Http/Controller.Ping (3 handlers)
+[GIN-debug] Listening and serving HTTP on :3001
+[GIN] 2020/06/10 - 10:56:55 | 200 |    115.6918ms |       127.0.0.1 | POST     "/api/login"
+{"level":"INFO","ts":"2020-06-10 10:57:12","file":"Controller/home.go:116","msg":"redis client.Set error: dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it."}
+[GIN] 2020/06/10 - 10:57:14 | 200 |    4.6316174s |       127.0.0.1 | GET      "/api/ping"

@@ -3,17 +3,28 @@ package Controller
 import (
 	"fmt"
 
-	"github.com/ZongzhiCui/go_gin/Http/Model"
-	"github.com/ZongzhiCui/go_gin/common"
+	"ZongzhiCui/go_gin/config"
+
+	"github.com/go-redis/redis"
+
+	"ZongzhiCui/go_gin/Http/Model"
+	"ZongzhiCui/go_gin/common"
+
 	"gopkg.in/go-playground/validator.v8"
 
 	"github.com/gin-gonic/gin"
 )
 
+//gte=10: 大于等于10, gte: 大于等于time.Now.UTC(), lt=10: 小于10, lt: 小于time.Now.UTC()
 type LoginForm struct {
 	User     string `form:"user" binding:"required"`
 	Password string `form:"password" binding:"required,min=6,max=12"`
 }
+
+/**
+// Validating by field:
+validate.FieldWithValue(password, confirmpassword, "eqfield")
+*/
 
 // 绑定模型获取验证错误的方法
 func (r *LoginForm) GetError(err validator.ValidationErrors) string {
@@ -58,7 +69,7 @@ func LoginEndpoint(c *gin.Context) {
 	if e := c.ShouldBind(&form); e == nil {
 
 		//连接数据库
-		userInfo := Model.User_info()
+		userInfo := Model.User_info(user)
 		//fmt.Printf("%+v \n", userInfo)
 
 		if form.User == userInfo.Name && form.Password == userInfo.Password {
@@ -89,5 +100,32 @@ func Create_user(c *gin.Context) {
 }
 
 func Ping(c *gin.Context) {
-	common.OutputJson(c, 200, "pong", []int{1, 2})
+	client := redis.NewClient(&redis.Options{
+		Addr:     config.RedisConf().Addr,
+		Password: config.RedisConf().Password, // no password set
+		DB:       config.RedisConf().DB,       // use default DB
+	})
+
+	logger := common.ZapLogger()
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar()
+
+	err := client.Set("key", "asdfasfaf", 0).Err()
+	if err != nil {
+		sugar.Infof("redis client.Set error: %s", err.Error())
+		sugar.Warnf("redis client.Set error: %s", err.Error())
+		//sugar.Debugf("sugarLogger name:%s", "修华师1")
+		//sugar.Warnf("sugarLogger name:%s", "修华师2")
+		//sugar.Errorf("sugarLogger name:%s", "修华师3")
+		//sugar.DPanicf("sugarLogger name:%s", "修华师4")
+		//_, _ = fmt.Fprintf(gin.DefaultWriter, err.Error()+"\n")
+	}
+
+	val, err := client.Get("key").Result()
+	if err != nil {
+		sugar.Warnf("redis client.Get error: %s", err.Error())
+		//_, _ = fmt.Fprintf(gin.DefaultWriter, err.Error()+"\n")
+	}
+
+	common.OutputJson(c, 200, val, []int{1, 2})
 }
